@@ -1,6 +1,7 @@
 import os
 import logging
 import threading
+import asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import google.generativeai as genai
@@ -165,6 +166,14 @@ def run_health_server():
 
 # ---------- MAIN ----------
 def main():
+    # Python 3.14 removed the implicit "create an event loop for me" behavior
+    # that python-telegram-bot's run_polling() relies on. Create one explicitly
+    # so it works on any Python version Render happens to use.
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
     threading.Thread(target=run_health_server, daemon=True).start()
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()

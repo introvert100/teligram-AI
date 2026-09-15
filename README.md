@@ -43,6 +43,7 @@ few messages per chat so it has short-term context.
 5. Under **Environment Variables**, add:
    - `TELEGRAM_BOT_TOKEN` = the token from BotFather
    - `GEMINI_API_KEY` = the key from Google AI Studio
+   - `PYTHON_VERSION` = `3.11.9` (belt-and-suspenders alongside `runtime.txt` — Render sometimes ignores one or the other)
 6. Click **Create Web Service**. Render will build and start it — watch the logs; you should see `Bot starting...`.
 
    **If you already created the service before adding `runtime.txt`:** Render caches the Python version it picked at first build. After uploading `runtime.txt` to your repo, go to your service on Render → **Manual Deploy** → **Clear build cache & deploy** so it picks up Python 3.11 instead of reusing the old one.
