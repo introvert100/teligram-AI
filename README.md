@@ -9,6 +9,7 @@ few messages per chat so it has short-term context.
 ## Files
 - `bot.py` — the bot
 - `requirements.txt` — Python dependencies
+- `runtime.txt` — pins the Python version Render uses (important, see Step 4)
 
 ## Step 1: Create your Telegram bot
 1. Open Telegram, search for **@BotFather**, start a chat.
@@ -27,7 +28,7 @@ few messages per chat so it has short-term context.
 ## Step 3: Put the code on GitHub
 1. Create a free GitHub account if you don't have one: https://github.com
 2. Create a new repository (e.g. `telegram-ai-bot`).
-3. Upload `bot.py` and `requirements.txt` to it (via the GitHub web UI "Add file" → "Upload files", or `git push` if you know git).
+3. Upload `bot.py`, `requirements.txt`, and `runtime.txt` to it (via the GitHub web UI "Add file" → "Upload files", or `git push` if you know git).
 
 ## Step 4: Deploy on Render (free)
 1. Go to https://render.com and sign up (free, can use GitHub login).
@@ -43,6 +44,8 @@ few messages per chat so it has short-term context.
    - `TELEGRAM_BOT_TOKEN` = the token from BotFather
    - `GEMINI_API_KEY` = the key from Google AI Studio
 6. Click **Create Web Service**. Render will build and start it — watch the logs; you should see `Bot starting...`.
+
+   **If you already created the service before adding `runtime.txt`:** Render caches the Python version it picked at first build. After uploading `runtime.txt` to your repo, go to your service on Render → **Manual Deploy** → **Clear build cache & deploy** so it picks up Python 3.11 instead of reusing the old one.
 
 ## Step 5: Test it
 In your Telegram group, type `@yourbotname hello` — it should reply within a few seconds.
