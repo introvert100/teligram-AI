@@ -50,7 +50,7 @@ def get_model_for_chat(chat_id):
     # Gemini's system_instruction is set per-model, so we build a model
     # instance using whatever persona is currently active for this chat.
     return genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
+        model_name="gemini-3.6-flash",
         system_instruction=get_persona(chat_id),
     )
 
