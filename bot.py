@@ -98,7 +98,7 @@ def _call_openai_compatible(url, api_key, model, system_prompt, history, user_te
         url,
         headers=headers,
         json={"model": model, "messages": messages},
-        timeout=30,
+        timeout=15,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -238,8 +238,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = chat.id
     history = get_history(chat_id)
 
+    await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+
     try:
-        reply_text = generate_reply(get_persona(chat_id), history, user_text)
+        # Run the blocking AI call in a background thread so it doesn't freeze
+        # the bot's event loop for other messages/chats while waiting.
+        reply_text = await asyncio.to_thread(generate_reply, get_persona(chat_id), history, user_text)
         history.append({"role": "user", "content": user_text})
         history.append({"role": "assistant", "content": reply_text})
         trim_history(chat_id)
@@ -282,7 +286,8 @@ async def eightball(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Ask me something! Usage: /8ball Will it rain tomorrow?")
         return
     try:
-        reply = ask_once(
+        reply = await asyncio.to_thread(
+            ask_once,
             "You are a magic 8-ball. Reply to the yes/no question with a short, "
             "classic magic-8-ball-style answer (e.g. 'It is certain', 'Ask again later', "
             "'Don't count on it'). One line only, a bit mysterious/fun. No explanation.",
@@ -296,7 +301,8 @@ async def eightball(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        reply = ask_once(
+        reply = await asyncio.to_thread(
+            ask_once,
             "You tell short, clean, witty jokes suitable for a group chat. "
             "Give exactly one joke, no preamble.",
             "Tell me a random joke.",
@@ -309,7 +315,8 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        reply = ask_once(
+        reply = await asyncio.to_thread(
+            ask_once,
             "You share short, genuinely interesting, true random facts. "
             "Give exactly one fact in 1-2 sentences, no preamble.",
             "Give me a random interesting fact.",
@@ -322,7 +329,8 @@ async def fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def wyr(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        reply = ask_once(
+        reply = await asyncio.to_thread(
+            ask_once,
             "You generate fun, creative 'would you rather' questions for a group chat to debate. "
             "Give exactly one, formatted as: Would you rather ... or ...? No preamble, no explanation.",
             "Give me a would-you-rather question.",
@@ -347,7 +355,8 @@ async def roast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        reply = ask_once(
+        reply = await asyncio.to_thread(
+            ask_once,
             "You give short, funny, PLAYFUL roasts — witty and light, never actually mean, "
             "never about protected characteristics (race, religion, gender, etc), "
             "never about appearance in a hurtful way. Keep it to 1-2 sentences, clearly in good fun.",
