@@ -24,7 +24,7 @@ PORT = int(os.environ.get("PORT", 10000))
 # Models used per provider (free-tier friendly). Override via env vars so you
 # can switch models without touching code or redeploying from GitHub.
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free")
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openrouter/free")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 
 # Default personality. Used until someone changes it with /persona in a given chat.
@@ -100,6 +100,11 @@ def _call_openai_compatible(url, api_key, model, system_prompt, history, user_te
         json={"model": model, "messages": messages},
         timeout=15,
     )
+    if resp.status_code == 404:
+        raise RuntimeError(
+            f"Model '{model}' not found on this provider (likely retired/renamed). "
+            f"Check the current model list and update the env var."
+        )
     resp.raise_for_status()
     data = resp.json()
     return data["choices"][0]["message"]["content"]
@@ -138,7 +143,7 @@ PROVIDERS = [
 
 def generate_reply(system_prompt, history, user_text):
     """Try each configured provider in order until one succeeds."""
-    last_error = None
+    errors = []
     for name, key, fn in PROVIDERS:
         if not key:
             continue
@@ -148,9 +153,9 @@ def generate_reply(system_prompt, history, user_text):
             return reply
         except Exception as e:
             logger.warning(f"{name} failed: {e}")
-            last_error = e
+            errors.append(f"{name}: {e}")
             continue
-    raise RuntimeError(f"All providers failed. Last error: {last_error}")
+    raise RuntimeError("All providers failed:\n" + "\n".join(errors))
 
 
 def ask_once(system_prompt, user_text):
