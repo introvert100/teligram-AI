@@ -1,10 +1,19 @@
-# Telegram AI Bot (Gemini + Render, 100% free)
+# Telegram AI Bot (Gemini + Groq + OpenRouter, 100% free)
 
 ## What this does
-A Telegram bot that joins your group chat and replies using Google's Gemini API
-whenever someone mentions it (`@yourbotname`) or replies to one of its messages.
-In a private chat with the bot, it replies to everything. It remembers the last
-few messages per chat so it has short-term context.
+A Telegram bot that joins your group chat and replies using AI whenever someone
+mentions it (`@yourbotname`) or replies to one of its messages. In a private chat
+with the bot, it replies to everything. It remembers the last few messages per
+chat so it has short-term context.
+
+It supports **three free AI providers with automatic fallback**: Gemini, Groq,
+and OpenRouter. If Gemini hits its rate limit, the bot automatically tries Groq,
+then OpenRouter, before giving up. You only need to set up ONE of these to get
+started, but adding all three makes the bot much less likely to ever hit "sorry,
+I'm rate limited."
+
+It also has some fun extras: `/roll`, `/flip`, `/8ball`, `/joke`, `/fact`,
+`/wyr`, `/roast`, plus `/persona` to change its personality per chat.
 
 ## Files
 - `bot.py` — the bot
@@ -20,10 +29,24 @@ few messages per chat so it has short-term context.
    - If you skip this, the bot will only ever see messages sent as commands.
 5. Add your bot to your group chat like any other member.
 
-## Step 2: Get a free Gemini API key
+## Step 2: Get free AI API keys
+You need **at least one** of these. Getting all three gives the bot automatic
+fallback so one provider's rate limit never fully stops it.
+
+**Gemini (you already have this)**
 1. Go to https://aistudio.google.com/app/apikey
-2. Sign in with a Google account.
-3. Click **Create API key**, copy it. This is free (Gemini 2.0 Flash has a generous free tier).
+2. Sign in with a Google account, click **Create API key**, copy it.
+
+**Groq (free, very fast, Llama models)**
+1. Go to https://console.groq.com/keys
+2. Sign up / log in, click **Create API Key**, copy it.
+
+**OpenRouter (free tier models available)**
+1. Go to https://openrouter.ai/keys
+2. Sign up / log in, click **Create Key**, copy it.
+3. Note: OpenRouter's free models (like the one this bot uses by default) have
+   their own separate rate limits — check https://openrouter.ai/docs#limits if
+   you want to swap the model used in `bot.py` (`OPENROUTER_MODEL` near the top).
 
 ## Step 3: Put the code on GitHub
 1. Create a free GitHub account if you don't have one: https://github.com
@@ -42,8 +65,23 @@ few messages per chat so it has short-term context.
    - **Instance Type**: Free
 5. Under **Environment Variables**, add:
    - `TELEGRAM_BOT_TOKEN` = the token from BotFather
-   - `GEMINI_API_KEY` = the key from Google AI Studio
+   - `GEMINI_API_KEY` = your Gemini key (optional if you set Groq/OpenRouter instead)
+   - `GROQ_API_KEY` = your Groq key (optional)
+   - `OPENROUTER_API_KEY` = your OpenRouter key (optional)
    - `PYTHON_VERSION` = `3.11.9` (belt-and-suspenders alongside `runtime.txt` — Render sometimes ignores one or the other)
+
+   You need at least one of the three AI keys set. The bot tries them in this
+   order: **Gemini → Groq → OpenRouter**, falling through automatically if one
+   fails or is rate-limited.
+
+   Optionally, you can also set which specific model each provider uses,
+   without touching any code:
+   - `GEMINI_MODEL` (default: `gemini-2.0-flash`)
+   - `GROQ_MODEL` (default: `llama-3.3-70b-versatile`)
+   - `OPENROUTER_MODEL` (default: `meta-llama/llama-3.1-8b-instruct:free`)
+
+   To change a model, just edit the env var on Render and hit **Manual Deploy →
+   Restart service** — no repo changes or rebuild needed.
 6. Click **Create Web Service**. Render will build and start it — watch the logs; you should see `Bot starting...`.
 
    **If you already created the service before adding `runtime.txt`:** Render caches the Python version it picked at first build. After uploading `runtime.txt` to your repo, go to your service on Render → **Manual Deploy** → **Clear build cache & deploy** so it picks up Python 3.11 instead of reusing the old one.
@@ -51,6 +89,27 @@ few messages per chat so it has short-term context.
 ## Step 5: Test it
 In your Telegram group, type `@yourbotname hello` — it should reply within a few seconds.
 Use `/reset` in a chat to wipe that chat's memory.
+
+## Changing models later
+Since `GEMINI_MODEL`, `GROQ_MODEL`, and `OPENROUTER_MODEL` are environment
+variables, you can swap models anytime from the Render dashboard — no GitHub
+push, no rebuild. Just update the env var and restart the service. Where to
+find valid model names:
+- Gemini: https://ai.google.dev/gemini-api/docs/models
+- Groq: https://console.groq.com/docs/models
+- OpenRouter (filter by "Free"): https://openrouter.ai/models
+
+## Fun commands
+- `/roll 2d6` — roll dice (any NdM, e.g. `1d20`, `3d8`)
+- `/flip` — flip a coin
+- `/8ball <question>` — ask the magic 8-ball a yes/no question
+- `/joke` — random joke
+- `/fact` — random interesting fact
+- `/wyr` — a "would you rather" question to spark group debate
+- `/roast` — reply to someone's message with `/roast` (or `/roast <text>`) for a playful, non-mean roast
+
+These use whichever AI provider is currently working (same fallback chain as
+normal chat), except `/roll` and `/flip` which are instant and don't use AI at all.
 
 ## Changing the bot's personality
 Each chat can have its own personality, changed on the fly with `/persona`:
